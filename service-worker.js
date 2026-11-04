@@ -1,34 +1,30 @@
-const CACHE_NAME = 'sr-control-v4';
-const FILES_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+// Primero busca la versión nueva en internet; si no hay conexión, usa la guardada.
+// Así las actualizaciones de la app se ven siempre sin quedar pegado a una versión vieja.
+const CACHE_NAME = 'seguryraf-v6';
+const FILES_TO_CACHE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './watermark.png'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE)).catch(() => {}));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // Dejamos pasar directo cualquier cosa que no sea un simple GET de nuestros propios archivos
-  // (por ejemplo, las llamadas a Firebase no deben pasar por este cache).
-  if(event.request.method !== 'GET') return;
-  if(!event.request.url.startsWith(self.location.origin)) return;
+  const req = event.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(req)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
+      })
+      .catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
   );
 });
