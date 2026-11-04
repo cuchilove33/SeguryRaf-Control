@@ -258,6 +258,25 @@
   .modal-actions .btn{margin-top:0;}
   .btn-danger{background:var(--bad-dim);color:var(--bad);}
 
+  .quick-top{margin:0 0 12px;padding:12px;background:var(--accent-dim);color:var(--accent-2);border:1px solid var(--accent);}
+  .badge.info{background:var(--accent-dim);color:var(--accent-2);}
+  .card-empresa{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--accent-2);background:var(--accent-dim);padding:4px 11px;border-radius:9px;}
+  .card-empresa.sin{color:var(--text-dim);background:var(--surface-2);font-weight:500;}
+  .emp-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;}
+  .chat-box{background:rgba(4,8,14,.72);border:1px solid var(--line-strong);border-radius:16px;padding:14px;height:48vh;min-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:12px;-webkit-overflow-scrolling:touch;}
+  .msg{max-width:90%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;}
+  .msg.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),#4a86c2);color:var(--accent-text);border-bottom-right-radius:4px;}
+  .msg.bot{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:4px;}
+  .chat-input-row{display:flex;gap:8px;align-items:stretch;}
+  .chat-input-row textarea{flex:1;min-height:104px;font-size:13px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14px;font-family:inherit;resize:none;outline:none;}
+  .chat-input-row textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+  .chat-send{flex-shrink:0;padding:0 18px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),#4a86c2);color:var(--accent-text);font-weight:700;font-size:14px;cursor:pointer;}
+  .section-switch{flex-wrap:wrap;}
+  .sec-opt{flex:1 1 30%;min-width:0;}
+  .hist-actions{display:flex;gap:10px;margin-top:16px;}
+  .hist-actions .btn{margin-top:0;font-size:14px;padding:13px 8px;}
+  .field select{appearance:auto;}
+
   ::selection{background:var(--accent);color:var(--accent-text);}
 
   /* Login */
@@ -314,14 +333,17 @@
     </div>
   </header>
 
-  <div class="sync-line"><div class="sync-dot" id="syncDot"></div><span id="syncText">Conectado</span></div>
+  <div class="sync-line"><div class="sync-dot" id="syncDot"></div><span id="syncText">Conectado · Guardado en este equipo</span></div>
 
-  <div class="section-switch" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+  <button type="button" class="btn quick-top" id="openQuickAllBtn">⚡ Carga Rápida</button>
+
+  <div class="section-switch">
     <div class="sec-opt active" data-section="personas">Personas</div>
     <div class="sec-opt" data-section="empleados">Empleados</div>
     <div class="sec-opt" data-section="visitas">Visitas</div>
     <div class="sec-opt" data-section="historial">Historial</div>
     <div class="sec-opt" data-section="novedades">Novedades</div>
+    <div class="sec-opt" data-section="chat">💬 Chat</div>
   </div>
 
   <div class="tabs">
@@ -347,7 +369,7 @@
     <div id="buscar-empleados" style="display:none;">
       <div class="search-box">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="searchInputProv" placeholder="Buscar por nombre, apellido o función..." autocomplete="off">
+        <input type="text" id="searchInputProv" placeholder="Buscar por nombre, apellido, empresa o función..." autocomplete="off">
       </div>
       <div class="count-line" id="countLineProv">Cargando...</div>
       <div id="resultsProv"></div>
@@ -378,8 +400,24 @@
           <button type="button" class="btn btn-ghost" id="clearFechaHist" style="margin:0;padding:12px;">Quitar filtro</button>
         </div>
       </div>
+      <div class="field">
+        <label>Filtrar por tipo <span class="opt">(opcional)</span></label>
+        <select id="filterTipoHist">
+          <option value="">Todos</option>
+          <option value="Socio">Socio</option>
+          <option value="No Socio">No Socio</option>
+          <option value="Visita">Visita</option>
+          <option value="Empleado">Empleado</option>
+          <option value="Novedad">Novedad</option>
+          <option value="Incidente">Incidente</option>
+        </select>
+      </div>
       <div class="count-line" id="countLineHist">Cargando...</div>
       <div id="resultsHist"></div>
+      <div class="hist-actions">
+        <button type="button" class="btn btn-primary" id="histPdfBtn">Exportar PDF</button>
+        <button type="button" class="btn btn-ghost" id="histWaBtn" style="border-color:var(--ok);color:var(--ok);">Enviar por WhatsApp</button>
+      </div>
     </div>
 
     <!-- ===== BUSCAR: NOVEDADES ===== -->
@@ -399,6 +437,15 @@
       </div>
       <div class="count-line" id="countLineInc">Cargando...</div>
       <div id="resultsInc"></div>
+    </div>
+
+    <!-- ===== CHAT ===== -->
+    <div id="buscar-chat" style="display:none;">
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-input-row">
+        <textarea id="chatInput" rows="3" enterkeyhint="send" placeholder="Escribí: 'Juan Perez es socio?' o 'Agregar socio Juan 123 3492' o 'Agregar empleado Carlos empresa MENARA 3492 Deposita' o 'Agregar visita Maria mañana AB123CD Lopez'"></textarea>
+        <button type="button" class="chat-send" id="chatSend">Enviar</button>
+      </div>
     </div>
 
   </div>
@@ -504,6 +551,17 @@
           <input type="text" id="p-apellido" placeholder="Gómez">
         </div>
         <div class="field">
+          <label>Empresa para la que labura</label>
+          <input type="text" id="p-empresa" placeholder="Ej: MENARA, Electricista El Rayo, Plomería Lopez, Jockey Club, etc">
+        </div>
+        <div class="field">
+          <label>Deposita / Retira <span class="opt">(opcional)</span></label>
+          <div class="status-picker" id="accionPicker">
+            <div class="status-opt ok" data-accion="Deposita">Deposita</div>
+            <div class="status-opt warn" data-accion="Retira">Retira</div>
+          </div>
+        </div>
+        <div class="field">
           <label>Función <span class="opt">(opcional)</span></label>
           <input type="text" id="p-funcion" placeholder="Mantenimiento, limpieza, cocina...">
         </div>
@@ -535,6 +593,16 @@
           <label>Cantidad de invitados <span class="opt">(opcional)</span></label>
           <input type="number" id="v-invitados" placeholder="1" inputmode="numeric" min="1">
         </div>
+        <div class="row2">
+          <div class="field">
+            <label>Patente <span class="opt">(opcional)</span></label>
+            <input type="text" id="v-patente" placeholder="AB123CD">
+          </div>
+          <div class="field">
+            <label>Invitado por <span class="opt">(opcional)</span></label>
+            <input type="text" id="v-invitadopor" placeholder="Lopez">
+          </div>
+        </div>
         <div class="field">
           <label>Notas <span class="opt">(opcional)</span></label>
           <input type="text" id="v-notas" placeholder="Autoriza: Juan Pérez, socio N° 104">
@@ -551,6 +619,13 @@
         <div class="form-title">Reportar novedad</div>
 
         <div class="form-section">Detalle de la novedad</div>
+        <div class="field">
+          <label>Tipo de registro</label>
+          <div class="status-picker">
+            <div class="status-opt sel warn" data-catnov="Novedad">Novedad</div>
+            <div class="status-opt bad" data-catnov="Incidente">Incidente</div>
+          </div>
+        </div>
         <div class="row2">
           <div class="field">
             <label>Hora</label>
@@ -651,6 +726,30 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="quickAllOverlay">
+  <div class="modal modal-scroll">
+    <div class="modal-title">⚡ Carga Rápida</div>
+    <div class="modal-sub">Un registro por línea. La app reconoce sola si es socio, empleado o visita:<br>
+      <b>Socio:</b> Juan Perez 123 3492123456<br>
+      <b>Empleado:</b> Carlos Gomez MENARA 3492123456 Deposita<br>
+      <b>Visita:</b> Maria Gonzalez 04/11/2026 AB123CD Lopez<br>
+      <span style="font-size:12px;">Si el nombre tiene más de 2 palabras o la empresa es larga, separá con comas: Ana María Gómez, Plomería López, 3492123456, Retira</span></div>
+    <div class="field">
+      <label>Pegá o escribí las líneas acá</label>
+      <textarea id="qa-texto" style="min-height:220px;" placeholder="Juan Perez 123 3492123456&#10;Carlos Gomez MENARA 3492123456 Deposita&#10;Maria Gonzalez 04/11/2026 AB123CD Lopez"></textarea>
+    </div>
+    <div class="field">
+      <label>Lista para los socios</label>
+      <select id="qa-lista"></select>
+    </div>
+    <div id="qa-result" style="font-size:13px;"></div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn btn-ghost" id="qa-cancelar" style="margin:0;">Cerrar</button>
+      <button class="btn btn-primary" id="qa-cargar" style="margin:0;">Cargar todo</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -683,7 +782,7 @@ let unsubVisitas = null;
 let unsubHistorial = null;
 let unsubIncidentes = null;
 let activeList = 'todas';
-let currentSection = 'personas'; // 'personas' | 'empleados' | 'visitas' | 'historial' | 'novedades'
+let currentSection = 'personas'; // 'personas' | 'empleados' | 'visitas' | 'historial' | 'novedades' | 'chat'
 let editingId = null;
 let editingProvId = null;
 let editingVisitaId = null;
@@ -692,6 +791,8 @@ let deletingId = null;
 let deletingType = null; // 'persona' | 'empleado' | 'visita' | 'novedad'
 let currentStatus = 'socio';
 let currentEstadoNov = 'curso';
+let currentCatNov = 'Novedad';
+let currentAccion = '';
 let movTarget = null; // { tipo:'persona'|'empleado', id, nombre }
 
 const $ = (s) => document.querySelector(s);
@@ -760,7 +861,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-window.addEventListener('online', () => { $('#syncDot').classList.remove('off'); $('#syncText').textContent = 'Conectado'; });
+window.addEventListener('online', () => { $('#syncDot').classList.remove('off'); $('#syncText').textContent = 'Conectado · Guardado en este equipo'; });
 window.addEventListener('offline', () => { $('#syncDot').classList.add('off'); $('#syncText').textContent = 'Sin conexión (viendo datos guardados)'; });
 if(!navigator.onLine){ $('#syncDot').classList.add('off'); $('#syncText').textContent = 'Sin conexión (viendo datos guardados)'; }
 
@@ -769,6 +870,7 @@ function subscribeData(){
     personas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderListChips();
     render();
+    renderHistorial();
   }, () => toast('No se pudieron cargar los datos'));
 
   unsubListas = onSnapshot(doc(db, 'meta', 'listas'), (snap) => {
@@ -780,11 +882,13 @@ function subscribeData(){
   unsubProveedores = onSnapshot(collection(db, 'empleados'), (snap) => {
     proveedores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderProv();
+    renderHistorial();
   }, () => toast('No se pudieron cargar los empleados'));
 
   unsubVisitas = onSnapshot(collection(db, 'visitas'), (snap) => {
     visitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderVisitas();
+    renderHistorial();
   }, () => toast('No se pudieron cargar las visitas'));
 
   unsubHistorial = onSnapshot(collection(db, 'movimientos'), (snap) => {
@@ -795,6 +899,7 @@ function subscribeData(){
   unsubIncidentes = onSnapshot(collection(db, 'novedades'), (snap) => {
     incidentes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderIncidentes();
+    renderHistorial();
   }, () => toast('No se pudieron cargar las novedades'));
 }
 
@@ -951,6 +1056,7 @@ function renderProv(){
     base.filter(p =>
       ((p.nombre||'')+' '+(p.apellido||'')).toLowerCase().includes(q) ||
       (p.funcion||'').toLowerCase().includes(q) ||
+      (p.empresa||'').toLowerCase().includes(q) ||
       (p.telefono||'').toLowerCase().includes(q)
     );
 
@@ -976,6 +1082,10 @@ function renderProv(){
       <div class="card-top">
         <div class="card-main">
           <div class="card-name">${escapeHtml(p.nombre)} ${escapeHtml(p.apellido)}</div>
+          <div class="emp-row">
+            ${p.empresa ? `<span class="card-empresa">🏢 ${escapeHtml(p.empresa)}</span>` : `<span class="card-empresa sin">Sin empresa cargada</span>`}
+            ${p.accion ? `<span class="badge ${p.accion === 'Deposita' ? 'ok' : 'warn'}">${escapeHtml(p.accion)}</span>` : ''}
+          </div>
           <div class="card-meta">${metaParts.join(' &middot; ')}</div>
         </div>
         <div class="card-actions">
@@ -1026,6 +1136,8 @@ function resetFormProv(){
   $('#p-apellido').value = '';
   $('#p-funcion').value = '';
   $('#p-telefono').value = '';
+  $('#p-empresa').value = '';
+  currentAccion = ''; syncAccion();
   $('#formTitleProv').textContent = 'Nuevo empleado';
   $('#saveProvBtn').textContent = 'Guardar';
   $('#cancelEditProvBtn').style.display = 'none';
@@ -1072,6 +1184,8 @@ window.editProveedor = function(id){
   $('#p-apellido').value = p.apellido;
   $('#p-funcion').value = p.funcion || '';
   $('#p-telefono').value = p.telefono || '';
+  $('#p-empresa').value = p.empresa || '';
+  currentAccion = p.accion || ''; syncAccion();
   $('#formTitleProv').textContent = 'Editar empleado';
   $('#saveProvBtn').textContent = 'Guardar cambios';
   $('#cancelEditProvBtn').style.display = 'block';
@@ -1203,8 +1317,16 @@ $('#saveProvBtn').onclick = async () => {
     return;
   }
 
+  const empresa = $('#p-empresa').value.trim();
+  if(!empresa){
+    toast('Ingresá la empresa para la que labura');
+    return;
+  }
+
   const data = {
     nombre, apellido,
+    empresa,
+    accion: currentAccion,
     funcion: $('#p-funcion').value.trim(),
     telefono: $('#p-telefono').value.trim()
   };
@@ -1225,6 +1347,16 @@ $('#saveProvBtn').onclick = async () => {
   }
   $('#saveProvBtn').disabled = false;
 };
+
+function syncAccion(){
+  document.querySelectorAll('#accionPicker .status-opt').forEach(x => x.classList.toggle('sel', x.dataset.accion === currentAccion));
+}
+document.querySelectorAll('#accionPicker .status-opt').forEach(el => {
+  el.addEventListener('click', () => {
+    currentAccion = (currentAccion === el.dataset.accion) ? '' : el.dataset.accion;
+    syncAccion();
+  });
+});
 
 $('#cancelEditBtn').onclick = () => { resetForm(); switchTab('buscar'); };
 $('#cancelEditProvBtn').onclick = () => { resetFormProv(); switchTab('buscar'); };
@@ -1371,6 +1503,8 @@ function resetFormVisita(){
   $('#v-fecha').value = '';
   $('#v-invitados').value = '';
   $('#v-notas').value = '';
+  $('#v-patente').value = '';
+  $('#v-invitadopor').value = '';
   $('#formTitleVisita').textContent = 'Nueva visita esperada';
   $('#saveVisitaBtn').textContent = 'Guardar';
   $('#cancelEditVisitaBtn').style.display = 'none';
@@ -1384,6 +1518,8 @@ window.editVisita = function(id){
   $('#v-fecha').value = v.fecha || '';
   $('#v-invitados').value = v.invitados || '';
   $('#v-notas').value = v.notas || '';
+  $('#v-patente').value = v.patente || '';
+  $('#v-invitadopor').value = v.invitadoPor || '';
   $('#formTitleVisita').textContent = 'Editar visita esperada';
   $('#saveVisitaBtn').textContent = 'Guardar cambios';
   $('#cancelEditVisitaBtn').style.display = 'block';
@@ -1402,9 +1538,10 @@ $('#saveVisitaBtn').onclick = async () => {
     nombre, fecha,
     invitados: $('#v-invitados').value.trim(),
     notas: $('#v-notas').value.trim(),
-    estado: 'pendiente',
-    horaIngreso: ''
+    patente: $('#v-patente').value.trim().toUpperCase(),
+    invitadoPor: $('#v-invitadopor').value.trim()
   };
+  if(!editingVisitaId){ data.estado = 'pendiente'; data.horaIngreso = ''; }
   $('#saveVisitaBtn').disabled = true;
   try{
     if(editingVisitaId){
@@ -1431,10 +1568,24 @@ window.marcarIngresoVisita = async function(id){
     await updateDoc(doc(db, 'visitas', id), { estado: 'ingreso', horaIngreso: ahora });
     await addDoc(collection(db, 'movimientos'), {
       tipo: 'ingreso', refTipo: 'visita', refId: id, refNombre: v.nombre,
-      cantidad: '', descripcion: v.notas || '', fecha: ahora
+      cantidad: '', descripcion: v.notas || '', fecha: ahora,
+      categoria: 'Visita', empresa: '', patente: v.patente || '', registradoPor: quien()
     });
     toast('Ingreso registrado');
   }catch(e){ toast('No se pudo registrar el ingreso'); }
+}
+
+window.registrarEgresoVisita = async function(id){
+  const v = visitas.find(x => x.id === id);
+  if(!v) return;
+  try{
+    await addDoc(collection(db, 'movimientos'), {
+      tipo: 'egreso', refTipo: 'visita', refId: id, refNombre: v.nombre,
+      fecha: new Date().toISOString(),
+      categoria: 'Visita', empresa: '', patente: v.patente || '', registradoPor: quien()
+    });
+    toast('Egreso registrado');
+  }catch(e){ toast('No se pudo registrar el egreso'); }
 }
 
 window.desmarcarIngresoVisita = async function(id){
@@ -1474,7 +1625,8 @@ function renderVisitas(){
       <div class="card-top">
         <div class="card-main">
           <div class="card-name">${escapeHtml(v.nombre)}</div>
-          <div class="card-meta">${fechaFmt}${v.invitados ? ` &middot; ${escapeHtml(String(v.invitados))} invitado(s)` : ''}</div>
+          <div class="card-meta">${fechaFmt}${v.invitados ? ` &middot; ${escapeHtml(String(v.invitados))} invitado(s)` : ''}${v.invitadoPor ? ` &middot; Invitado por ${escapeHtml(v.invitadoPor)}` : ''}</div>
+          ${v.patente ? `<div class="vehiculo-row" style="margin-top:6px;"><span class="patente">${escapeHtml(v.patente)}</span></div>` : ''}
           ${v.notas ? `<div class="card-detalle">${escapeHtml(v.notas)}</div>` : ''}
         </div>
         <div class="badge ${cls}">${badgeLabel}</div>
@@ -1487,7 +1639,7 @@ function renderVisitas(){
           </div>
         </div>
       </div>
-      ${!yaIngreso ? `<button type="button" class="link-btn" style="margin-top:8px;" onclick="marcarIngresoVisita('${v.id}')">+ Marcar ingreso</button>` : `<div class="card-detalle" style="margin-top:8px;">Ingresó: ${new Date(v.horaIngreso).toLocaleString('es-AR')} <button type="button" class="link-btn" style="margin-left:8px;padding:0;" onclick="desmarcarIngresoVisita('${v.id}')">Desmarcar</button></div>`}
+      ${!yaIngreso ? `<button type="button" class="link-btn" style="margin-top:8px;" onclick="marcarIngresoVisita('${v.id}')">+ Marcar ingreso</button>` : `<div class="card-detalle" style="margin-top:8px;">Ingresó: ${new Date(v.horaIngreso).toLocaleString('es-AR')} <button type="button" class="link-btn" style="margin-left:8px;padding:0;" onclick="desmarcarIngresoVisita('${v.id}')">Desmarcar</button></div><button type="button" class="link-btn" style="margin-top:6px;" onclick="registrarEgresoVisita('${v.id}')">+ Registrar egreso</button>`}
     </div>`;
   }).join('');
 
@@ -1499,23 +1651,34 @@ function renderVisitas(){
 }
 
 // ===================== NOVEDADES =====================
-document.querySelectorAll('#agregar-novedades .status-opt').forEach(el => {
+document.querySelectorAll('#agregar-novedades [data-estadonov]').forEach(el => {
   el.addEventListener('click', () => {
-    document.querySelectorAll('#agregar-novedades .status-opt').forEach(x => x.classList.remove('sel'));
+    document.querySelectorAll('#agregar-novedades [data-estadonov]').forEach(x => x.classList.remove('sel'));
     el.classList.add('sel');
     currentEstadoNov = el.dataset.estadonov;
   });
 });
 
+document.querySelectorAll('#agregar-novedades [data-catnov]').forEach(el => {
+  el.addEventListener('click', () => {
+    currentCatNov = el.dataset.catnov;
+    syncCatNov();
+  });
+});
+function syncCatNov(){
+  document.querySelectorAll('#agregar-novedades [data-catnov]').forEach(x => x.classList.toggle('sel', x.dataset.catnov === currentCatNov));
+}
+
 function resetFormInc(){
   editingIncId = null;
+  currentCatNov = 'Novedad'; syncCatNov();
   $('#i-hora').value = '';
   $('#i-dia').value = '';
   $('#i-lugar').value = '';
   $('#i-descripcion').value = '';
   currentEstadoNov = 'curso';
-  document.querySelectorAll('#agregar-novedades .status-opt').forEach(el => el.classList.remove('sel'));
-  document.querySelector('#agregar-novedades .status-opt[data-estadonov="curso"]').classList.add('sel');
+  document.querySelectorAll('#agregar-novedades [data-estadonov]').forEach(el => el.classList.remove('sel'));
+  document.querySelector('#agregar-novedades [data-estadonov][data-estadonov="curso"]').classList.add('sel');
   $('#saveIncBtn').textContent = 'Guardar novedad';
   $('#cancelEditIncBtn').style.display = 'none';
 }
@@ -1525,12 +1688,13 @@ window.editIncidente = function(id){
   if(!i) return;
   editingIncId = id;
   currentEstadoNov = i.estado;
+  currentCatNov = i.categoria === 'Incidente' ? 'Incidente' : 'Novedad'; syncCatNov();
   $('#i-hora').value = i.hora || '';
   $('#i-dia').value = i.dia || '';
   $('#i-lugar').value = i.lugar || '';
   $('#i-descripcion').value = i.descripcion || '';
-  document.querySelectorAll('#agregar-novedades .status-opt').forEach(el => el.classList.remove('sel'));
-  document.querySelector(`#agregar-novedades .status-opt[data-estadonov="${i.estado}"]`).classList.add('sel');
+  document.querySelectorAll('#agregar-novedades [data-estadonov]').forEach(el => el.classList.remove('sel'));
+  document.querySelector(`#agregar-novedades [data-estadonov][data-estadonov="${i.estado}"]`).classList.add('sel');
   $('#saveIncBtn').textContent = 'Guardar cambios';
   $('#cancelEditIncBtn').style.display = 'block';
   goToSection('novedades');
@@ -1549,6 +1713,8 @@ $('#saveIncBtn').onclick = async () => {
     lugar,
     descripcion,
     estado: currentEstadoNov,
+    categoria: currentCatNov,
+    registradoPor: editingIncId ? (incidentes.find(x=>x.id===editingIncId)?.registradoPor || quien()) : quien(),
     fecha: editingIncId ? (incidentes.find(x=>x.id===editingIncId)?.fecha || new Date().toISOString()) : new Date().toISOString()
   };
 
@@ -1604,7 +1770,7 @@ function renderIncidentes(){
       <div class="card-top">
         <div class="card-main">
           <div class="card-name">${escapeHtml(i.lugar || 'Novedad')}</div>
-          <div class="card-meta">${metaParts.join(' &middot; ')}</div>
+          <div class="card-meta">${i.categoria === 'Incidente' ? 'Incidente' : 'Novedad'}${metaParts.length ? ' &middot; ' + metaParts.join(' &middot; ') : ''}</div>
         </div>
         <div class="badge ${cls}">${estadoLabel}</div>
         <div class="card-actions">
@@ -1617,48 +1783,6 @@ function renderIncidentes(){
         </div>
       </div>
       <div class="card-detalle">${escapeHtml(i.descripcion)}</div>
-    </div>`;
-  }).join('');
-}
-
-// ===================== HISTORIAL (solo lectura, con eliminación manual) =====================
-function renderHistorial(){
-  const q = searchInputHist.value.trim().toLowerCase();
-  const fechaFiltro = $('#filterFechaHist').value;
-  let base = historial.slice().sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
-  if(fechaFiltro) base = base.filter(h => (h.fecha||'').slice(0,10) === fechaFiltro);
-  const filtered = !q ? base : base.filter(h => (h.refNombre||'').toLowerCase().includes(q));
-
-  countLineHist.textContent = historial.length === 0
-    ? 'Todavía no hay movimientos registrados'
-    : (q || fechaFiltro ? `${filtered.length} resultado${filtered.length===1?'':'s'}` : `${historial.length} movimiento${historial.length===1?'':'s'} registrado${historial.length===1?'':'s'}`);
-
-  if(filtered.length === 0){
-    resultsHist.innerHTML = `<div class="empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-      <p>${historial.length === 0 ? 'Los ingresos y egresos registrados van a aparecer acá' : 'No hay movimientos con esos datos'}</p>
-    </div>`;
-    return;
-  }
-
-  resultsHist.innerHTML = filtered.map(h => {
-    const cls = h.tipo === 'ingreso' ? 'ok' : 'warn';
-    const fechaFmt = h.fecha ? new Date(h.fecha).toLocaleString('es-AR') : '';
-    const refTipoLabel = { persona:'Persona', empleado:'Empleado', visita:'Visita' }[h.refTipo] || '';
-    return `
-    <div class="card ${cls}">
-      <div class="card-top">
-        <div class="card-main">
-          <div class="card-name">${escapeHtml(h.refNombre||'')}</div>
-          <div class="card-meta">${refTipoLabel} &middot; ${fechaFmt}</div>
-        </div>
-        <div class="badge ${cls}">${h.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}</div>
-        <div class="card-actions">
-          <div class="icon-btn" onclick="askDelete('${h.id}','movimiento')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-          </div>
-        </div>
-      </div>
     </div>`;
   }).join('');
 }
@@ -1677,8 +1801,25 @@ async function registrarMovimiento(tipoMov){
     refTipo: movTarget.tipo,
     refId: movTarget.id,
     refNombre: movTarget.nombre,
-    fecha: new Date().toISOString()
+    fecha: new Date().toISOString(),
+    registradoPor: quien()
   };
+  if(movTarget.tipo === 'persona'){
+    const p = personas.find(x => x.id === movTarget.id);
+    data.categoria = (p && p.status === 'no-socio') ? 'No Socio' : 'Socio';
+    data.empresa = '';
+    data.patente = p ? [p.v1patente, p.v2patente].filter(Boolean).join(' / ') : '';
+  }else if(movTarget.tipo === 'empleado'){
+    const e = proveedores.find(x => x.id === movTarget.id);
+    data.categoria = 'Empleado';
+    data.empresa = e ? (e.empresa || '') : '';
+    data.patente = '';
+  }else if(movTarget.tipo === 'visita'){
+    const v = visitas.find(x => x.id === movTarget.id);
+    data.categoria = 'Visita';
+    data.empresa = '';
+    data.patente = v ? (v.patente || '') : '';
+  }
   try{
     await addDoc(collection(db, 'movimientos'), data);
     toast(tipoMov === 'ingreso' ? 'Ingreso registrado' : 'Egreso registrado');
@@ -1700,14 +1841,15 @@ $('#filterFechaInc').addEventListener('change', renderIncidentes);
 $('#clearFechaInc').addEventListener('click', () => { $('#filterFechaInc').value = ''; renderIncidentes(); });
 
 function switchTab(name){
-  // Historial no tiene "Agregar": siempre se queda en "buscar"
-  if(currentSection === 'historial') name = 'buscar';
+  // Historial y Chat no tienen "Agregar": siempre se quedan en "buscar"
+  const sinAgregar = currentSection === 'historial' || currentSection === 'chat';
+  if(sinAgregar) name = 'buscar';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  $('.tabs').style.display = currentSection === 'historial' ? 'none' : 'flex';
+  $('.tabs').style.display = sinAgregar ? 'none' : 'flex';
   $('#view-buscar').style.display = name === 'buscar' ? 'block' : 'none';
   $('#view-agregar').style.display = name === 'agregar' ? 'block' : 'none';
   if(name === 'buscar'){
-    const focusMap = { personas: searchInput, empleados: searchInputProv, visitas: searchInputVisitas, historial: searchInputHist, novedades: searchInputInc };
+    const focusMap = { personas: searchInput, empleados: searchInputProv, visitas: searchInputVisitas, historial: searchInputHist, novedades: searchInputInc, chat: chatInput };
     (focusMap[currentSection] || searchInput).focus();
   }
 }
@@ -1727,7 +1869,7 @@ document.querySelectorAll('.tab').forEach(t => {
 function goToSection(name){
   currentSection = name;
   document.querySelectorAll('.sec-opt').forEach(el => el.classList.toggle('active', el.dataset.section === name));
-  ['personas','empleados','visitas','historial','novedades'].forEach(s => {
+  ['personas','empleados','visitas','historial','novedades','chat'].forEach(s => {
     const buscarEl = $('#buscar-' + s);
     if(buscarEl) buscarEl.style.display = (name === s) ? 'block' : 'none';
     const agregarEl = $('#agregar-' + s);
@@ -1744,6 +1886,654 @@ document.querySelectorAll('.sec-opt').forEach(el => {
 
 searchInput.addEventListener('input', render);
 searchInputProv.addEventListener('input', renderProv);
+
+// ===================== ENTENDEDOR DE TEXTO (Carga Rápida y Chat) =====================
+const quien = () => (auth.currentUser && auth.currentUser.email) || '';
+const normTxt = (s) => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const pad2 = (n) => String(n).padStart(2,'0');
+function isoLocal(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+function addDays(n){ const d = new Date(); d.setDate(d.getDate() + n); return isoLocal(d); }
+function fmtFechaAR(iso){ const [y,m,d] = (iso||'').split('-'); return (y && m && d) ? `${d}/${m}/${y}` : (iso||''); }
+const digitsOf = (t) => (t||'').replace(/\D/g,'');
+const isPhoneTok = (t) => /^\+?\d[\d\-().]*$/.test(t) && digitsOf(t).length >= 8;
+const isNumTok = (t) => /^\d{1,7}$/.test(t);
+const RE_PATENTE = /^(?:[A-Za-z]{2}\d{3}[A-Za-z]{2}|[A-Za-z]{3}\d{3}|\d{3}[A-Za-z]{3}|[A-Za-z]\d{3}[A-Za-z]{3})$/;
+const limpiaTok = (t) => (t||'').replace(/[,;:.]+$/,'');
+
+function parseFechaTok(tok){
+  const t = limpiaTok(tok);
+  const n = normTxt(t);
+  if(n === 'hoy') return addDays(0);
+  if(n === 'manana') return addDays(1);
+  if(n === 'pasadomanana') return addDays(2);
+  const m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
+  if(!m) return null;
+  const d = +m[1], mo = +m[2];
+  let y = m[3] ? +m[3] : new Date().getFullYear();
+  if(y < 100) y += 2000;
+  if(mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const chk = new Date(y, mo-1, d);
+  if(chk.getMonth() !== mo-1) return null;
+  return y + '-' + pad2(mo) + '-' + pad2(d);
+}
+
+// "Juan Perez" -> nombre Juan, apellido Perez · "Perez, Juan" -> apellido Perez, nombre Juan
+function splitNombre(str){
+  const s = (str||'').replace(/\s+/g,' ').trim();
+  if(!s) return { nombre:'', apellido:'' };
+  const c = s.indexOf(',');
+  if(c > 0) return { apellido: s.slice(0,c).trim(), nombre: s.slice(c+1).trim() };
+  const t = s.split(' ');
+  if(t.length === 1) return { nombre: t[0], apellido: '' };
+  return { nombre: t.slice(0,-1).join(' '), apellido: t[t.length-1] };
+}
+
+// Socio: "Juan Perez 123 3492123456"  (nombre, N° de socio, teléfono)
+function parseSocioTxt(text){
+  const toks = text.trim().split(/\s+/).filter(Boolean);
+  const i = toks.findIndex(isNumTok);
+  if(i < 0) return { ok:false, error:'Falta el N° de socio' };
+  if(i < 1) return { ok:false, error:'Falta el nombre' };
+  let telefono = '';
+  for(const t of toks.slice(i+1)){
+    if(/^\+?\d[\d\-().]*$/.test(t) && digitsOf(t).length >= 3){ telefono = t; break; }
+  }
+  const nm = splitNombre(toks.slice(0,i).join(' '));
+  return { ok:true, nombre:nm.nombre, apellido:nm.apellido, numsocio:toks[i], telefono };
+}
+
+// Empleado: "Carlos Gomez MENARA 3492123456 Deposita"  (nombre, EMPRESA, teléfono, deposita/retira)
+function parseEmpleadoTxt(text){
+  const t = text.trim();
+  const hasDelim = /[,;|]/.test(t);
+  let parts = hasDelim ? t.split(/[,;|]+/).map(s => s.trim()).filter(Boolean) : [t];
+  let phone = '', accion = '', nextIsPhone = false;
+  parts = parts.map(p => p.split(/\s+/).filter(Boolean).filter(tok => {
+    const n = normTxt(tok.replace(/[:.]+$/,''));
+    if(/^(deposita|deposito|depositan|retira|retiro|retiran)$/.test(n)){ accion = n.startsWith('dep') ? 'Deposita' : 'Retira'; return false; }
+    if(/^(tel|telefono|cel|celular|whatsapp|wsp)$/.test(n)){ nextIsPhone = true; return false; }
+    if(!phone && (nextIsPhone ? /^\+?\d[\d\-().]*$/.test(tok) : isPhoneTok(tok))){ phone = tok; nextIsPhone = false; return false; }
+    nextIsPhone = false;
+    return true;
+  }));
+  parts = parts.filter(a => a.length);
+  if(!phone && parts.length){
+    const last = parts[parts.length-1];
+    if(last.length >= 1 && /^\+?\d{3,}$/.test(last[last.length-1]) && (hasDelim || last.length >= 2 || parts.length >= 2)){
+      phone = last.pop();
+    }
+  }
+  parts = parts.map(a => a.join(' ')).filter(Boolean);
+  let nameStr = '', empresa = '';
+  if(hasDelim && parts.length >= 2){
+    nameStr = parts[0]; empresa = parts.slice(1).join(' ');
+  }else{
+    const toks = (parts[0] || '').split(' ').filter(Boolean);
+    const ei = toks.findIndex(x => normTxt(x) === 'empresa');
+    if(ei > 0){ nameStr = toks.slice(0,ei).join(' '); empresa = toks.slice(ei+1).join(' '); }
+    else { nameStr = toks.slice(0,2).join(' '); empresa = toks.slice(2).join(' '); }
+  }
+  empresa = empresa.replace(/^empresa\s*:?\s*/i,'').trim();
+  if(!nameStr) return { ok:false, error:'Falta el nombre' };
+  if(!empresa) return { ok:false, error:'Falta la empresa' };
+  const nm = splitNombre(nameStr);
+  return { ok:true, nombre:nm.nombre, apellido:nm.apellido, empresa, telefono:phone, accion };
+}
+
+// Visita: "Maria Gonzalez 04/11/2026 AB123CD Lopez"  (nombre, fecha, patente, invitado por)
+function parseVisitaTxt(text, defaultHoy){
+  let t = text.replace(/pasado\s+ma[ñn]ana/ig,'pasadomanana').replace(/\b([A-Za-z]{2})\s(\d{3})\s([A-Za-z]{2})\b/g,'$1$2$3').trim();
+  let invitadoPor = '';
+  const mi = t.match(/\binvitad[oa]\s+por\s+(.+)$/i);
+  if(mi){ invitadoPor = mi[1].trim(); t = t.slice(0, mi.index).trim(); }
+  const toks = t.split(/\s+/).filter(Boolean);
+  let patente = '';
+  const pi = toks.findIndex(x => RE_PATENTE.test(limpiaTok(x)));
+  if(pi >= 0){ patente = limpiaTok(toks[pi]).toUpperCase(); toks.splice(pi,1); }
+  const di = toks.findIndex(x => parseFechaTok(x));
+  if(di < 0 && !defaultHoy) return { ok:false, error:'Falta la fecha (ej: 04/11/2026, hoy o mañana)' };
+  const fecha = di >= 0 ? parseFechaTok(toks[di]) : addDays(0);
+  const nameToks = di >= 0 ? toks.slice(0,di) : toks;
+  const others = di >= 0 ? toks.slice(di+1) : [];
+  if(!invitadoPor) invitadoPor = others.join(' ').replace(/^(por|de)\s+/i,'').trim();
+  const nombre = nameToks.join(' ').replace(/[,;]+$/,'').trim();
+  if(!nombre) return { ok:false, error:'Falta el nombre' };
+  return { ok:true, nombre, fecha, patente, invitadoPor, sinFecha: di < 0 };
+}
+
+function clasificarLinea(raw){
+  let line = raw.trim();
+  if(!line) return null;
+  let tipo = null;
+  const m = line.match(/^(socio|empleado|visita)s?\s*:\s*/i);
+  if(m){ tipo = normTxt(m[1]); line = line.slice(m[0].length).trim(); }
+  const toks = line.split(/\s+/);
+  if(!tipo){
+    if(toks.some(x => parseFechaTok(x))) tipo = 'visita';
+    else if(toks.some(x => /^(deposita|deposito|retira|retiro)$/.test(normTxt(limpiaTok(x))))) tipo = 'empleado';
+    else tipo = 'socio';
+  }
+  const r = tipo === 'visita' ? parseVisitaTxt(line, !!m) : tipo === 'empleado' ? parseEmpleadoTxt(line) : parseSocioTxt(line);
+  return { raw, tipo, ...r };
+}
+
+// ===================== CARGA RÁPIDA (todo junto) =====================
+function renderQaLista(){
+  const sel = $('#qa-lista');
+  sel.innerHTML = listas.length ? listas.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('') : `<option value="">(sin listas)</option>`;
+  if(activeList !== 'todas' && listas.includes(activeList)) sel.value = activeList;
+}
+
+$('#openQuickAllBtn').onclick = () => {
+  $('#qa-texto').value = '';
+  $('#qa-result').innerHTML = '';
+  renderQaLista();
+  $('#quickAllOverlay').classList.add('show');
+};
+$('#qa-cancelar').onclick = () => { $('#quickAllOverlay').classList.remove('show'); };
+
+$('#qa-cargar').onclick = async () => {
+  const btn = $('#qa-cargar');
+  const parsed = $('#qa-texto').value.split('\n').map(clasificarLinea).filter(Boolean);
+  if(parsed.length === 0){ toast('Escribí al menos una línea'); return; }
+  const lista = $('#qa-lista').value || '';
+  const bad = parsed.filter(p => !p.ok);
+  const clave = (a, n, s) => (a||'').trim().toLowerCase() + '|' + (n||'').trim().toLowerCase() + '|' + (s||'').trim();
+  const existentes = new Set(personas.map(p => clave(p.apellido, p.nombre, p.numsocio)));
+  const writes = [];
+  let nSoc = 0, nEmp = 0, nVis = 0, rep = 0;
+  for(const p of parsed.filter(x => x.ok)){
+    if(p.tipo === 'socio'){
+      const k = clave(p.apellido, p.nombre, p.numsocio);
+      if(existentes.has(k)){ rep++; continue; }
+      existentes.add(k);
+      writes.push(['personas', { nombre:p.nombre, apellido:p.apellido, lista, dni:'', numsocio:p.numsocio, nacimiento:'', telefono:p.telefono, status:'socio', v1modelo:'', v1patente:'', v2modelo:'', v2patente:'' }]);
+      nSoc++;
+    }else if(p.tipo === 'empleado'){
+      writes.push(['empleados', { nombre:p.nombre, apellido:p.apellido, funcion:'', telefono:p.telefono, empresa:p.empresa, accion:p.accion }]);
+      nEmp++;
+    }else{
+      writes.push(['visitas', { nombre:p.nombre, fecha:p.fecha, invitados:'', notas:'', patente:p.patente, invitadoPor:p.invitadoPor, estado:'pendiente', horaIngreso:'' }]);
+      nVis++;
+    }
+  }
+  btn.disabled = true;
+  btn.textContent = 'Cargando...';
+  let hechos = 0;
+  try{
+    for(let i = 0; i < writes.length; i += 400){
+      const batch = writeBatch(db);
+      for(const [col, data] of writes.slice(i, i + 400)) batch.set(doc(collection(db, col)), data);
+      await batch.commit();
+      hechos = Math.min(i + 400, writes.length);
+    }
+  }catch(e){
+    toast(`Se cargaron ${hechos} de ${writes.length}. Se cortó la conexión: revisá lo cargado antes de reintentar.`);
+    btn.disabled = false; btn.textContent = 'Cargar todo';
+    return;
+  }
+  const total = writes.length;
+  const msg = total === 1 ? 'Se cargó 1 registro' : `Se cargaron ${total} registros`;
+  toast(msg);
+  const det = [];
+  if(nSoc) det.push(`${nSoc} socio${nSoc===1?'':'s'}`);
+  if(nEmp) det.push(`${nEmp} empleado${nEmp===1?'':'s'}`);
+  if(nVis) det.push(`${nVis} visita${nVis===1?'':'s'}`);
+  if(rep) det.push(`${rep} socio${rep===1?'':'s'} ya estaba${rep===1?'':'n'} cargado${rep===1?'':'s'}`);
+  btn.disabled = false; btn.textContent = 'Cargar todo';
+  if(bad.length){
+    $('#qa-texto').value = bad.map(b => b.raw).join('\n');
+    $('#qa-result').innerHTML = `<div style="color:var(--ok);font-weight:600;">${escapeHtml(msg)}${det.length ? ' (' + escapeHtml(det.join(', ')) + ')' : ''}</div>` +
+      `<div style="color:var(--bad);margin-top:6px;">${bad.length} línea${bad.length===1?'':'s'} no se pudo${bad.length===1?'':'ieron'} cargar (quedaron en el cuadro):</div>` +
+      bad.map(b => `<div class="ql-preview-row err"><span>${escapeHtml(b.raw)}</span><span class="ql-preview-meta">${escapeHtml(b.error)}</span></div>`).join('');
+  }else{
+    $('#quickAllOverlay').classList.remove('show');
+  }
+};
+
+// ===================== CHAT (100% local, sin IA externa) =====================
+const chatBox = $('#chatBox');
+const chatInput = $('#chatInput');
+const CHAT_AYUDA =
+`No te entendí 🤔 Probá con alguno de estos ejemplos:
+
+CONSULTAR
+• Juan Perez es socio?
+• Carlos Gomez es empleado?
+• MENARA es proveedor?
+• Maria Gonzalez es visita?
+
+AGREGAR
+• Agregar socio Juan Perez 123 3492123456
+• Agregar empleado Carlos Gomez empresa MENARA telefono 3492123456 Deposita
+• Agregar visita Maria Gonzalez mañana AB123CD invitada por Lopez`;
+
+function chatAdd(text, who){
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.textContent = text;
+  chatBox.appendChild(d);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function nameMatch(q, ...fields){
+  const qt = normTxt(q).split(/\s+/).filter(Boolean);
+  const hay = normTxt(fields.join(' '));
+  return qt.length > 0 && qt.every(t => hay.includes(t));
+}
+
+function respSocio(q){
+  const r = personas.filter(p => nameMatch(q, p.nombre, p.apellido));
+  if(!r.length) return `❌ No encontré a "${q}" en la lista de socios.`;
+  const est = { socio:'socio al día', vencido:'cuota vencida', 'no-socio':'NO es socio' };
+  const line = p => `${p.nombre} ${p.apellido}`.trim() + ' — ' + (est[p.status] || '') + (p.numsocio ? ` (N° ${p.numsocio})` : '') + (p.lista ? ` · ${p.lista}` : '');
+  if(r.length === 1){
+    const p = r[0];
+    return `${p.status === 'socio' ? '✅' : (p.status === 'vencido' ? '⚠️' : '❌')} ${line(p)}`;
+  }
+  return `Encontré ${r.length} coincidencias para "${q}":\n` + r.slice(0,8).map(p => '• ' + line(p)).join('\n') +
+    (r.length > 8 ? `\n… y ${r.length - 8} más. Escribí nombre y apellido para afinar.` : '');
+}
+
+const lineaEmp = (e) => `${e.nombre} ${e.apellido}`.trim() + (e.empresa ? ` — empresa: ${e.empresa}` : ' — sin empresa cargada') + (e.accion ? ` · ${e.accion}` : '') + (e.telefono ? ` · tel ${e.telefono}` : '');
+
+function respEmpresa(q, r){
+  return `✅ Sí, "${r[0].empresa}" figura como proveedor con ${r.length} empleado${r.length===1?'':'s'}:\n` + r.slice(0,10).map(e => '• ' + lineaEmp(e)).join('\n') + (r.length > 10 ? `\n… y ${r.length - 10} más.` : '');
+}
+function respEmpleado(q){
+  const r = proveedores.filter(p => nameMatch(q, p.nombre, p.apellido));
+  if(r.length === 1) return '✅ Sí, es empleado: ' + lineaEmp(r[0]);
+  if(r.length > 1) return `Encontré ${r.length} empleados para "${q}":\n` + r.slice(0,8).map(e => '• ' + lineaEmp(e)).join('\n');
+  const re = proveedores.filter(p => normTxt(p.empresa||'').includes(normTxt(q)));
+  if(re.length) return respEmpresa(q, re);
+  return `❌ No encontré a "${q}" entre los empleados.`;
+}
+function respProveedor(q){
+  const re = proveedores.filter(p => normTxt(p.empresa||'').includes(normTxt(q)));
+  if(re.length) return respEmpresa(q, re);
+  const r = proveedores.filter(p => nameMatch(q, p.nombre, p.apellido));
+  if(r.length) return `✅ "${q}" figura como empleado de proveedor:\n` + r.slice(0,8).map(e => '• ' + lineaEmp(e)).join('\n');
+  return `❌ No encontré "${q}" como proveedor (ni por empresa ni por nombre).`;
+}
+function respVisita(q){
+  const r = visitas.filter(v => nameMatch(q, v.nombre));
+  if(!r.length) return `❌ No encontré a "${q}" entre las visitas.`;
+  const line = v => `${v.nombre} — ${fmtFechaAR(v.fecha)}` + (v.patente ? ` · patente ${v.patente}` : '') + (v.invitadoPor ? ` · invitó ${v.invitadoPor}` : '') + (v.estado === 'ingreso' ? ' · ya ingresó' : ' · pendiente');
+  return `✅ ${r.length === 1 ? 'Figura como visita' : 'Encontré ' + r.length + ' visitas'}:\n` + r.slice(0,8).map(v => '• ' + line(v)).join('\n');
+}
+
+async function chatAgregar(tipo, resto){
+  if(/^socio|^socia/i.test(tipo)){
+    const p = parseSocioTxt(resto);
+    if(!p.ok) return `No pude agregar el socio: ${p.error}.\nEjemplo: Agregar socio Juan Perez 123 3492123456`;
+    const lista = (activeList !== 'todas' && listas.includes(activeList)) ? activeList : (listas[0] || '');
+    const dup = personas.some(x => normTxt(x.nombre) === normTxt(p.nombre) && normTxt(x.apellido) === normTxt(p.apellido) && (x.numsocio||'') === p.numsocio);
+    if(dup) return `ℹ️ ${p.nombre} ${p.apellido} (N° ${p.numsocio}) ya estaba cargado.`;
+    await addDoc(collection(db, 'personas'), { nombre:p.nombre, apellido:p.apellido, lista, dni:'', numsocio:p.numsocio, nacimiento:'', telefono:p.telefono, status:'socio', v1modelo:'', v1patente:'', v2modelo:'', v2patente:'' });
+    return `✅ Listo: agregué a ${`${p.nombre} ${p.apellido}`.trim()} como socio (N° ${p.numsocio}${p.telefono ? ', tel ' + p.telefono : ''})${lista ? ' en la lista "' + lista + '"' : ''}.`;
+  }
+  if(/^visita/i.test(tipo)){
+    const v = parseVisitaTxt(resto, true);
+    if(!v.ok) return `No pude agregar la visita: ${v.error}.\nEjemplo: Agregar visita Maria Gonzalez mañana AB123CD invitada por Lopez`;
+    await addDoc(collection(db, 'visitas'), { nombre:v.nombre, fecha:v.fecha, invitados:'', notas:'', patente:v.patente, invitadoPor:v.invitadoPor, estado:'pendiente', horaIngreso:'' });
+    return `✅ Listo: agregué la visita de ${v.nombre} para el ${fmtFechaAR(v.fecha)}${v.sinFecha ? ' (no dijiste fecha, puse hoy)' : ''}${v.patente ? ' · patente ' + v.patente : ''}${v.invitadoPor ? ' · invitada por ' + v.invitadoPor : ''}.`;
+  }
+  const e = parseEmpleadoTxt(resto);
+  if(!e.ok) return `No pude agregar el empleado: ${e.error}.\nEjemplo: Agregar empleado Carlos Gomez empresa MENARA telefono 3492123456 Deposita`;
+  await addDoc(collection(db, 'empleados'), { nombre:e.nombre, apellido:e.apellido, funcion:'', telefono:e.telefono, empresa:e.empresa, accion:e.accion });
+  return `✅ Listo: agregué a ${`${e.nombre} ${e.apellido}`.trim()} como empleado de ${e.empresa}${e.accion ? ' · ' + e.accion : ''}${e.telefono ? ' · tel ' + e.telefono : ''}.`;
+}
+
+async function chatResponder(texto){
+  const t = texto.trim().replace(/^¿+/,'');
+  const ma = t.match(/^(?:agreg[aá]r?|carg[aá]r?|alta(?:\s+de)?)\s+(?:un[ao]?\s+)?(socio|socia|empleado|empleada|proveedor|proveedora|visita)\s+(.+)$/i);
+  if(ma) return await chatAgregar(normTxt(ma[1]), ma[2]);
+  const mc = t.match(/^(.+?)\s+(?:es|son|est[aá]|figura(?:\s+como)?)\s+(?:un[ao]?\s+)?(socio|socia|empleado|empleada|proveedor|proveedora|visita|visitante)s?\s*\??\s*$/i);
+  if(mc){
+    const q = mc[1].trim();
+    const k = normTxt(mc[2]);
+    if(k.startsWith('soc')) return respSocio(q);
+    if(k.startsWith('empleado')) return respEmpleado(q);
+    if(k.startsWith('proveedor')) return respProveedor(q);
+    return respVisita(q);
+  }
+  return CHAT_AYUDA;
+}
+
+async function chatEnviar(){
+  const texto = chatInput.value.trim();
+  if(!texto) return;
+  chatInput.value = '';
+  chatAdd(texto, 'user');
+  try{
+    chatAdd(await chatResponder(texto), 'bot');
+  }catch(e){
+    chatAdd('⚠️ No pude guardar (revisá la conexión) e intentá de nuevo.', 'bot');
+  }
+}
+$('#chatSend').onclick = chatEnviar;
+chatInput.addEventListener('keydown', (ev) => {
+  if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); chatEnviar(); }
+});
+chatAdd('Hola 👋 Soy el asistente de SeguryRaf. Consulto y cargo datos usando solo tus listas, sin internet externo ni IA.\n\n' + CHAT_AYUDA.replace('No te entendí 🤔 Probá con alguno de estos ejemplos:', 'Podés escribirme, por ejemplo:'), 'bot');
+
+// ===================== HISTORIAL COMPLETO =====================
+function localParts(iso){
+  const d = new Date(iso);
+  if(!iso || isNaN(d)) return { fecha:'', hora:'' };
+  return { fecha: isoLocal(d), hora: pad2(d.getHours()) + ':' + pad2(d.getMinutes()) };
+}
+
+function historialEntradas(){
+  const mp = new Map(personas.map(p => [p.id, p]));
+  const me = new Map(proveedores.map(p => [p.id, p]));
+  const mv = new Map(visitas.map(p => [p.id, p]));
+  const out = [];
+  for(const h of historial){
+    const loc = localParts(h.fecha);
+    let categoria = h.categoria;
+    if(!categoria){
+      if(h.refTipo === 'empleado') categoria = 'Empleado';
+      else if(h.refTipo === 'visita') categoria = 'Visita';
+      else { const p = mp.get(h.refId); categoria = (p && p.status === 'no-socio') ? 'No Socio' : 'Socio'; }
+    }
+    let empresa = h.empresa, patente = h.patente;
+    if(empresa === undefined) empresa = h.refTipo === 'empleado' ? ((me.get(h.refId) || {}).empresa || '') : '';
+    if(patente === undefined){
+      if(h.refTipo === 'persona'){ const p = mp.get(h.refId); patente = p ? [p.v1patente, p.v2patente].filter(Boolean).join(' / ') : ''; }
+      else if(h.refTipo === 'visita'){ patente = (mv.get(h.refId) || {}).patente || ''; }
+      else patente = '';
+    }
+    out.push({ src:'mov', id:h.id, creado:h.fecha||'', fecha:loc.fecha, hora:loc.hora, tipo: h.tipo === 'ingreso' ? 'Ingreso' : 'Egreso',
+      categoria, nombre:h.refNombre||'', detalle:'', empresa:empresa||'', patente:patente||'', por:h.registradoPor||'' });
+  }
+  for(const i of incidentes){
+    const loc = localParts(i.fecha);
+    const fecha = i.dia || loc.fecha;
+    const hora = i.hora || (i.dia ? '' : loc.hora);
+    out.push({ src:'nov', id:i.id, creado:i.fecha||'', fecha, hora, tipo:'—', categoria: i.categoria === 'Incidente' ? 'Incidente' : 'Novedad',
+      nombre:i.lugar||'Novedad', detalle:i.descripcion||'', empresa:'', patente:'', por:i.registradoPor||'', estado:i.estado });
+  }
+  out.sort((a,b) => (b.fecha + ' ' + (b.hora||'00:00')).localeCompare(a.fecha + ' ' + (a.hora||'00:00')) || (b.creado||'').localeCompare(a.creado||''));
+  return out;
+}
+
+function historialFiltrado(){
+  const q = normTxt(searchInputHist.value);
+  const dia = $('#filterFechaHist').value;
+  const tipo = $('#filterTipoHist').value;
+  return historialEntradas().filter(e =>
+    (!dia || e.fecha === dia) &&
+    (!tipo || e.categoria === tipo) &&
+    (!q || normTxt([e.nombre, e.empresa, e.patente, e.detalle].join(' ')).includes(q))
+  );
+}
+
+function renderHistorial(){
+  const todos = historialEntradas();
+  const filtered = historialFiltrado();
+  const hayFiltro = !!(searchInputHist.value.trim() || $('#filterFechaHist').value || $('#filterTipoHist').value);
+
+  countLineHist.textContent = todos.length === 0
+    ? 'Todavía no hay registros'
+    : (hayFiltro ? `${filtered.length} de ${todos.length} registro${todos.length===1?'':'s'}` : `${todos.length} registro${todos.length===1?'':'s'}`);
+
+  if(filtered.length === 0){
+    resultsHist.innerHTML = `<div class="empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <p>${todos.length === 0 ? 'Los ingresos, egresos, novedades e incidentes registrados van a aparecer acá' : 'No hay registros con esos filtros'}</p>
+    </div>`;
+    return;
+  }
+
+  resultsHist.innerHTML = filtered.map(e => {
+    let cls, badge;
+    if(e.src === 'mov'){ cls = e.tipo === 'Ingreso' ? 'ok' : 'warn'; badge = e.tipo; }
+    else { cls = e.categoria === 'Incidente' ? 'bad' : 'warn'; badge = e.categoria; }
+    const meta = [fmtFechaAR(e.fecha), e.hora, e.categoria].filter(Boolean).map(x => `<span>${escapeHtml(x)}</span>`).join('');
+    const del = e.src === 'mov' ? `<div class="card-actions"><div class="icon-btn" onclick="askDelete('${e.id}','movimiento')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </div></div>` : '';
+    return `
+    <div class="card ${cls}">
+      <div class="card-top">
+        <div class="card-main">
+          <div class="card-name">${escapeHtml(e.nombre)}</div>
+          <div class="card-meta">${meta}</div>
+          ${e.empresa ? `<div class="card-empresa">🏢 ${escapeHtml(e.empresa)}</div>` : ''}
+          ${e.patente ? `<div class="vehiculo-row" style="margin-top:6px;"><span class="patente">${escapeHtml(e.patente)}</span></div>` : ''}
+        </div>
+        <div class="badge ${cls}">${escapeHtml(badge)}</div>
+        ${del}
+      </div>
+      ${e.detalle ? `<div class="card-detalle">${escapeHtml(e.detalle)}</div>` : ''}
+      <div class="card-detalle">Registró: ${e.por ? escapeHtml(e.por) : '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===================== PDF (hecho a mano, sin librerías ni internet) =====================
+const HELV_W = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,
+  667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,
+  556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const CP1252 = {'€':0x80,'‚':0x82,'ƒ':0x83,'„':0x84,'…':0x85,'†':0x86,'‡':0x87,'ˆ':0x88,'‰':0x89,'Š':0x8A,'‹':0x8B,'Œ':0x8C,'Ž':0x8E,'‘':0x91,'’':0x92,'“':0x93,'”':0x94,'•':0x95,'–':0x96,'—':0x97,'˜':0x98,'™':0x99,'š':0x9A,'›':0x9B,'œ':0x9C,'ž':0x9E,'Ÿ':0x9F};
+
+function chW(ch){
+  const c = ch.charCodeAt(0);
+  if(c >= 32 && c <= 126) return HELV_W[c-32];
+  const b = ch.normalize('NFD').charCodeAt(0);
+  if(b >= 32 && b <= 126) return HELV_W[b-32];
+  return 556;
+}
+function strW(s, size, bold){ let w = 0; for(const ch of s) w += chW(ch); return w / 1000 * size * (bold ? 1.08 : 1); }
+
+function pdfStr(s){
+  let out = '';
+  for(const ch of s){
+    const c = ch.codePointAt(0);
+    if(c > 0xFFFF || c === 0x200D || c === 0xFE0F) continue;
+    let b;
+    if(c < 256 && !(c >= 0x80 && c < 0xA0)) b = c;
+    else if(CP1252[ch]) b = CP1252[ch];
+    else b = 63;
+    if(b < 32) b = 32;
+    if(b === 40 || b === 41 || b === 92) out += '\\';
+    out += String.fromCharCode(b);
+  }
+  return '(' + out + ')';
+}
+
+function wrapPdf(text, maxW, size, bold){
+  const out = [];
+  for(const para of String(text == null ? '' : text).split(/\r?\n/)){
+    let cur = '';
+    for(let w of para.split(/\s+/).filter(Boolean)){
+      while(strW(w, size, bold) > maxW){
+        let k = 1;
+        while(k < w.length && strW(w.slice(0, k+1), size, bold) <= maxW) k++;
+        if(cur){ out.push(cur); cur = ''; }
+        out.push(w.slice(0, k));
+        w = w.slice(k);
+      }
+      const t = cur ? cur + ' ' + w : w;
+      if(strW(t, size, bold) <= maxW) cur = t;
+      else { out.push(cur); cur = w; }
+    }
+    out.push(cur);
+  }
+  return out.length ? out : [''];
+}
+
+async function logoJpeg(){
+  const img = new Image();
+  img.src = './icon-192.png';
+  await img.decode();
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.drawImage(img, 0, 0);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), w: c.width, h: c.height };
+}
+
+async function buildHistorialPdf(rows, info){
+  const W = 842, H = 595, M = 28, TW = 786;
+  const cols = [['Fecha',56],['Hora',34],['Tipo',50],['Categoría',62],['Nombre',244],['Empresa',128],['Patente',62],['Registró',150]];
+  let logo = null;
+  try{ logo = await logoJpeg(); }catch(_){}
+  const pages = [];
+  let ops, yt;
+  const f = (n) => String(Math.round(n * 100) / 100);
+  const T = (x, ytop, s, size, bold, col) => { const c = col || [0,0,0]; ops.push(`BT /${bold ? 'F2' : 'F1'} ${size} Tf ${c[0]} ${c[1]} ${c[2]} rg ${f(x)} ${f(H - ytop)} Td ${pdfStr(s)} Tj ET`); };
+  const R = (x, ytop, w, h, c) => ops.push(`${c[0]} ${c[1]} ${c[2]} rg ${f(x)} ${f(H - ytop - h)} ${f(w)} ${f(h)} re f`);
+  const lh = 10, padX = 4, padY = 4;
+
+  function headerRow(){
+    R(M, yt, TW, 16, [0.10,0.22,0.36]);
+    let x = M;
+    for(const [name, w] of cols){ T(x + padX, yt + 11.5, name, 8, true, [1,1,1]); x += w; }
+    yt += 16;
+  }
+  function newPage(first){
+    ops = []; pages.push(ops); yt = M;
+    if(first){
+      if(logo) ops.push(`q 40 0 0 40 ${M} ${H - M - 40} cm /Im1 Do Q`);
+      T(M + (logo ? 50 : 0), M + 16, info.titulo, 15, true, [0.06,0.14,0.25]);
+      T(M + (logo ? 50 : 0), M + 30, info.sub1, 8.5, false, [0.35,0.35,0.35]);
+      T(M + (logo ? 50 : 0), M + 41, info.sub2, 8.5, false, [0.35,0.35,0.35]);
+      yt = M + 54;
+    }else{
+      T(M, yt + 8, info.titulo, 8, false, [0.4,0.4,0.4]);
+      yt += 18;
+    }
+    headerRow();
+  }
+
+  newPage(true);
+  if(rows.length === 0) T(M + padX, yt + 16, 'No hay registros para los filtros elegidos.', 9, false, [0.3,0.3,0.3]);
+
+  rows.forEach((r, i) => {
+    const nombreCell = r.nombre + (r.detalle ? ' — ' + r.detalle : '');
+    const cells = [fmtFechaAR(r.fecha), r.hora || '', r.tipo, r.categoria, nombreCell, r.empresa || '', r.patente || '', r.por || ''];
+    const wr = cells.map((c, ci) => wrapPdf(c, cols[ci][1] - 2 * padX, 8, false));
+    const nl = Math.max(...wr.map(a => a.length));
+    const rh = nl * lh + 2 * padY - 2;
+    if(yt + rh > H - M - 14) newPage(false);
+    if(i % 2 === 1) R(M, yt, TW, rh, [0.95,0.96,0.98]);
+    let x = M;
+    wr.forEach((ls, ci) => {
+      const col = ci === 2 ? (r.tipo === 'Ingreso' ? [0.05,0.45,0.2] : r.tipo === 'Egreso' ? [0.7,0.4,0] : [0.3,0.3,0.3]) : [0,0,0];
+      ls.forEach((ln, li) => T(x + padX, yt + padY + 7 + li * lh, ln, 8, ci === 2, col));
+      x += cols[ci][1];
+    });
+    yt += rh;
+    ops.push(`0.88 0.88 0.9 RG 0.4 w ${f(M)} ${f(H - yt)} m ${f(M + TW)} ${f(H - yt)} l S`);
+  });
+
+  pages.forEach((p, idx) => {
+    ops = p;
+    T(M, H - 14, 'SeguryRaf - Control Total', 7.5, false, [0.5,0.5,0.5]);
+    const pg = `Página ${idx + 1} de ${pages.length}`;
+    T(W - M - strW(pg, 7.5, false), H - 14, pg, 7.5, false, [0.5,0.5,0.5]);
+  });
+
+  const enc = (s) => { const u = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+  const chunks = []; const offs = []; let pos = 0;
+  const push = (u) => { chunks.push(u); pos += u.length; };
+  const obj = (n, body, stream) => {
+    offs[n] = pos;
+    push(enc(`${n} 0 obj\n${body}\n`));
+    if(stream){ push(enc('stream\n')); push(stream); push(enc('\nendstream\n')); }
+    push(enc('endobj\n'));
+  };
+  push(enc('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'));
+  const n = pages.length;
+  const kids = pages.map((_, k) => `${6 + 2*k} 0 R`).join(' ');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+  obj(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  obj(4, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  if(logo) obj(5, `<< /Type /XObject /Subtype /Image /Width ${logo.w} /Height ${logo.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logo.bytes.length} >>`, logo.bytes);
+  else obj(5, 'null');
+  pages.forEach((p, k) => {
+    const content = enc(p.join('\n'));
+    obj(6 + 2*k, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents ${7 + 2*k} 0 R >>`);
+    obj(7 + 2*k, `<< /Length ${content.length} >>`, content);
+  });
+  const total = 6 + 2 * n;
+  const xref = pos;
+  let x = `xref\n0 ${total}\n0000000000 65535 f \n`;
+  for(let i = 1; i < total; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  x += `trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  push(enc(x));
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+async function generarPdfHistorial(){
+  const rows = historialFiltrado();
+  const fechaIso = $('#filterFechaHist').value || addDays(0);
+  const fechaTxt = fmtFechaAR(fechaIso);
+  const ahora = new Date();
+  const filtros = [];
+  if($('#filterFechaHist').value) filtros.push('día ' + fechaTxt);
+  if($('#filterTipoHist').value) filtros.push('tipo ' + $('#filterTipoHist').value);
+  if(searchInputHist.value.trim()) filtros.push('búsqueda "' + searchInputHist.value.trim() + '"');
+  const info = {
+    titulo: `SeguryRaf - Control Total - Historial ${fechaTxt}`,
+    sub1: `Generado el ${fmtFechaAR(isoLocal(ahora))} a las ${pad2(ahora.getHours())}:${pad2(ahora.getMinutes())}${quien() ? ' por ' + quien() : ''}`,
+    sub2: `${rows.length} registro${rows.length === 1 ? '' : 's'} · Filtros: ${filtros.length ? filtros.join(', ') : 'ninguno (todos los registros)'}`
+  };
+  const blob = await buildHistorialPdf(rows, info);
+  return { blob, name: `SeguryRaf-Control-Total-Historial-${fechaIso}.pdf`, fechaTxt };
+}
+
+function descargarBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+$('#histPdfBtn').onclick = async () => {
+  const btn = $('#histPdfBtn');
+  btn.disabled = true; btn.textContent = 'Generando PDF...';
+  try{
+    const { blob, name } = await generarPdfHistorial();
+    descargarBlob(blob, name);
+    toast('PDF listo: ' + name);
+  }catch(e){ toast('No se pudo generar el PDF'); }
+  btn.disabled = false; btn.textContent = 'Exportar PDF';
+};
+
+$('#histWaBtn').onclick = async () => {
+  const btn = $('#histWaBtn');
+  btn.disabled = true; btn.textContent = 'Preparando...';
+  try{
+    const { blob, name, fechaTxt } = await generarPdfHistorial();
+    const texto = `Te envío el historial de SeguryRaf - Control Total del día ${fechaTxt}`;
+    const file = new File([blob], name, { type: 'application/pdf' });
+    let compartido = false;
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      try{
+        await navigator.share({ files: [file], title: texto, text: texto });
+        compartido = true;
+      }catch(e){
+        if(e && e.name === 'AbortError') compartido = true; // la persona canceló: no hacemos nada más
+      }
+    }
+    if(!compartido){
+      descargarBlob(blob, name);
+      toast('Se descargó el PDF. Adjuntalo en el chat de WhatsApp que se abre.');
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+    }
+  }catch(e){ toast('No se pudo preparar el PDF'); }
+  btn.disabled = false; btn.textContent = 'Enviar por WhatsApp';
+};
+
+$('#filterTipoHist').addEventListener('change', renderHistorial);
+
 
 // --- Instalación como app ---
 let deferredPrompt;

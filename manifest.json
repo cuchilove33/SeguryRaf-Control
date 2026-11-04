@@ -1,18 +1,14 @@
 {
-  "id": "/",
   "name": "SeguryRaf",
   "short_name": "SeguryRaf",
-  "description": "Control de acceso de personas y empleados",
+  "description": "Control de acceso: personas, proveedores, visitas, historial e incidentes",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
-  "lang": "es",
-  "background_color": "#10141a",
-  "theme_color": "#10141a",
+  "background_color": "#050b18",
+  "theme_color": "#050b18",
   "orientation": "portrait",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
