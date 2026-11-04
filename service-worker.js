@@ -1,6 +1,6 @@
 // Primero busca la versión nueva en internet; si no hay conexión, usa la guardada.
 // Así las actualizaciones de la app se ven siempre sin quedar pegado a una versión vieja.
-const CACHE_NAME = 'seguryraf-v7';
+const CACHE_NAME = 'seguryraf-v8';
 const FILES_TO_CACHE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './watermark.png'];
 
 self.addEventListener('install', (event) => {

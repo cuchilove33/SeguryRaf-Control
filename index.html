@@ -1794,8 +1794,7 @@ window.openMovModal = function(tipo, id, nombre){
   $('#movModalOverlay').classList.add('show');
 }
 
-async function registrarMovimiento(tipoMov){
-  if(!movTarget) return;
+async function crearMovimiento(tipoMov, movTarget){
   const data = {
     tipo: tipoMov,
     refTipo: movTarget.tipo,
@@ -1820,8 +1819,13 @@ async function registrarMovimiento(tipoMov){
     data.empresa = '';
     data.patente = v ? (v.patente || '') : '';
   }
+  await addDoc(collection(db, 'movimientos'), data);
+}
+
+async function registrarMovimiento(tipoMov){
+  if(!movTarget) return;
   try{
-    await addDoc(collection(db, 'movimientos'), data);
+    await crearMovimiento(tipoMov, movTarget);
     toast(tipoMov === 'ingreso' ? 'Ingreso registrado' : 'Egreso registrado');
   }catch(e){ toast('No se pudo registrar el movimiento'); }
   $('#movModalOverlay').classList.remove('show');
@@ -2103,6 +2107,11 @@ CONSULTAR
 • MENARA es proveedor?
 • Maria Gonzalez es visita?
 
+INGRESO / EGRESO
+• Ingreso Juan Perez
+• Egreso Carlos Gomez
+• Maria Gonzalez ingresó
+
 AGREGAR
 • Agregar socio Juan Perez 123 3492123456
 • Agregar empleado Carlos Gomez empresa MENARA telefono 3492123456 Deposita
@@ -2184,8 +2193,48 @@ async function chatAgregar(tipo, resto){
   return `✅ Listo: agregué a ${`${e.nombre} ${e.apellido}`.trim()} como empleado de ${e.empresa}${e.accion ? ' · ' + e.accion : ''}${e.telefono ? ' · tel ' + e.telefono : ''}.`;
 }
 
+async function chatMovimiento(tipoMov, qRaw){
+  let q = qRaw.trim().replace(/[?!.]+$/,'');
+  let soloTipo = null;
+  const mt = q.match(/^(.+?)\s+(socio|socia|empleado|empleada|proveedor|visita)$/i);
+  if(mt){
+    q = mt[1].trim();
+    const k = normTxt(mt[2]);
+    soloTipo = k.startsWith('soc') ? 'persona' : (k.startsWith('visita') ? 'visita' : 'empleado');
+  }
+  let c = [];
+  if(!soloTipo || soloTipo === 'persona') c = c.concat(personas.filter(p => nameMatch(q, p.nombre, p.apellido)).map(p => ({ tipo:'persona', id:p.id, nombre:`${p.nombre} ${p.apellido}`.trim(), etiqueta: p.status === 'no-socio' ? 'no socio' : 'socio', aviso: p.status === 'vencido' ? ' ⚠️ Ojo: tiene la cuota vencida.' : (p.status === 'no-socio' ? ' ⚠️ Ojo: figura como NO socio.' : ''), extra: p.numsocio ? 'N° ' + p.numsocio : '' })));
+  if(!soloTipo || soloTipo === 'empleado') c = c.concat(proveedores.filter(p => nameMatch(q, p.nombre, p.apellido)).map(p => ({ tipo:'empleado', id:p.id, nombre:`${p.nombre} ${p.apellido}`.trim(), etiqueta:'empleado', aviso:'', extra: p.empresa || '' })));
+  if(!soloTipo || soloTipo === 'visita') c = c.concat(visitas.filter(v => nameMatch(q, v.nombre)).map(v => ({ tipo:'visita', id:v.id, nombre:v.nombre, etiqueta:'visita', aviso:'', extra: fmtFechaAR(v.fecha) })));
+  if(c.length > 1){
+    const exactos = c.filter(x => normTxt(x.nombre).split(/\s+/).sort().join(' ') === normTxt(q).split(/\s+/).sort().join(' '));
+    if(exactos.length === 1) c = exactos;
+  }
+  const verbo = tipoMov === 'ingreso' ? 'Ingreso' : 'Egreso';
+  if(c.length === 0) return `❌ No encontré a "${q}" entre socios, empleados ni visitas, así que no registré el ${tipoMov}.`;
+  if(c.length > 1){
+    return `Encontré ${c.length} coincidencias para "${q}", no registré nada todavía:\n` +
+      c.slice(0,8).map(x => `• ${x.nombre} (${x.etiqueta}${x.extra ? ', ' + x.extra : ''})`).join('\n') +
+      `\n\nEscribí el nombre completo o agregá el tipo. Ej: ${verbo} ${c[0].nombre} ${c[0].etiqueta === 'no socio' ? 'socio' : c[0].etiqueta}`;
+  }
+  const x = c[0];
+  if(x.tipo === 'visita'){
+    if(tipoMov === 'ingreso') await marcarIngresoVisita(x.id); else await registrarEgresoVisita(x.id);
+  }else{
+    await crearMovimiento(tipoMov, { tipo:x.tipo, id:x.id, nombre:x.nombre });
+  }
+  const ahora = new Date();
+  return `✅ ${verbo} registrado: ${x.nombre} (${x.etiqueta}${x.tipo === 'empleado' && x.extra ? ' de ' + x.extra : ''}) a las ${pad2(ahora.getHours())}:${pad2(ahora.getMinutes())}.${x.aviso}`;
+}
+
 async function chatResponder(texto){
   const t = texto.trim().replace(/^¿+/,'');
+  const mm = t.match(/^(?:registrar\s+|dar\s+|marcar\s+|anotar\s+)?(ingreso|egreso|entrada|salida)\s+(?:de\s+|a\s+)?(.+)$/i) ||
+             (() => { const r = t.match(/^(.+?)\s+(ingres[oó]|entr[oó]|egres[oó]|sali[oó])\s*$/i); return r ? [r[0], r[2], r[1]] : null; })();
+  if(mm){
+    const k = normTxt(mm[1]);
+    return await chatMovimiento((k.startsWith('ingres') || k.startsWith('entr')) ? 'ingreso' : 'egreso', mm[2]);
+  }
   const ma = t.match(/^(?:agreg[aá]r?|carg[aá]r?|alta(?:\s+de)?)\s+(?:un[ao]?\s+)?(socio|socia|empleado|empleada|proveedor|proveedora|visita)\s+(.+)$/i);
   if(ma) return await chatAgregar(normTxt(ma[1]), ma[2]);
   const mc = t.match(/^(.+?)\s+(?:es|son|est[aá]|figura(?:\s+como)?)\s+(?:un[ao]?\s+)?(socio|socia|empleado|empleada|proveedor|proveedora|visita|visitante)s?\s*\??\s*$/i);
